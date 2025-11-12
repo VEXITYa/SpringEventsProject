@@ -1,0 +1,6 @@
+package dev.kuchishkin.enums;
+
+public enum UserRole {
+    USER,
+    ADMIN
+}
