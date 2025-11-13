@@ -2,7 +2,7 @@ package dev.kuchishkin.controller;
 
 import dev.kuchishkin.dto.JwtTokenResponse;
 import dev.kuchishkin.dto.UserDto;
-import dev.kuchishkin.model.User;
+import dev.kuchishkin.dto_converters.UserDtoConverter;
 import dev.kuchishkin.security.jwt.JwtAuthenticationService;
 import dev.kuchishkin.service.UserRegistrationService;
 import dev.kuchishkin.service.UserService;
@@ -28,14 +28,17 @@ public class UserController {
     private final Logger log = LoggerFactory.getLogger(UserController.class);
     private final JwtAuthenticationService jwtAuthenticationService;
     private final UserRegistrationService userRegistrationService;
+    private final UserDtoConverter userDtoConverter;
 
     public UserController(UserService userService,
         JwtAuthenticationService jwtAuthenticationService,
-        UserRegistrationService userRegistrationService
+        UserRegistrationService userRegistrationService,
+        UserDtoConverter userDtoConverter
     ) {
         this.userService = userService;
         this.jwtAuthenticationService = jwtAuthenticationService;
         this.userRegistrationService = userRegistrationService;
+        this.userDtoConverter = userDtoConverter;
     }
 
     @PostMapping
@@ -47,7 +50,7 @@ public class UserController {
         var user = userRegistrationService.registerUser(signUpRequest);
 
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(convertUserToDto(user));
+            .body(userDtoConverter.convertUserToDto(user));
     }
 
     @GetMapping("/{userId}")
@@ -56,7 +59,7 @@ public class UserController {
     ) {
         log.info("Get request getUserInfo: userId = {}", userId);
         var user = userService.findById(userId);
-        return ResponseEntity.ok(convertUserToDto(user));
+        return ResponseEntity.ok(userDtoConverter.convertUserToDto(user));
     }
 
     @PostMapping("/auth")
@@ -68,14 +71,4 @@ public class UserController {
         var token = jwtAuthenticationService.authenticateUser(signInRequest);
         return ResponseEntity.ok(new JwtTokenResponse(token));
     }
-
-
-    private UserDto convertUserToDto(User user) {
-        return new UserDto(
-            user.id(),
-            user.login(),
-            user.role()
-        );
-    }
-
 }
