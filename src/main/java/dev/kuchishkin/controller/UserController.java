@@ -1,13 +1,13 @@
 package dev.kuchishkin.controller;
 
 import dev.kuchishkin.dto.JwtTokenResponse;
+import dev.kuchishkin.dto.SignInRequest;
+import dev.kuchishkin.dto.SignUpRequest;
 import dev.kuchishkin.dto.UserDto;
 import dev.kuchishkin.dto_converters.UserDtoConverter;
 import dev.kuchishkin.security.jwt.JwtAuthenticationService;
 import dev.kuchishkin.service.UserRegistrationService;
 import dev.kuchishkin.service.UserService;
-import dev.kuchishkin.dto.SignInRequest;
-import dev.kuchishkin.dto.SignUpRequest;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +50,7 @@ public class UserController {
         var user = userRegistrationService.registerUser(signUpRequest);
 
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(userDtoConverter.convertUserToDto(user));
+            .body(userDtoConverter.toDto(user));
     }
 
     @GetMapping("/{userId}")
@@ -59,7 +59,7 @@ public class UserController {
     ) {
         log.info("Get request getUserInfo: userId = {}", userId);
         var user = userService.findById(userId);
-        return ResponseEntity.ok(userDtoConverter.convertUserToDto(user));
+        return ResponseEntity.ok(userDtoConverter.toDto(user));
     }
 
     @PostMapping("/auth")

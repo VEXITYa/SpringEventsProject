@@ -40,17 +40,49 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(authorizeHttpRequest ->
                 authorizeHttpRequest
-                    .requestMatchers(HttpMethod.POST, "/users").permitAll()
-                    .requestMatchers(HttpMethod.POST, "/users/auth").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/users/{userId}").hasAuthority("ADMIN")
-                    .requestMatchers(HttpMethod.POST, "/locations").hasAuthority("ADMIN")
+                    .requestMatchers(
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**",
+                        "/openapi.yaml",
+                        "/webjars/**",
+                        "/swagger-resources/**",
+                        "/configuration/**"
+                    )
+                        .permitAll()
+                    .requestMatchers(HttpMethod.POST, "/users")
+                        .permitAll()
+                    .requestMatchers(HttpMethod.POST, "/users/auth")
+                        .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/users/{userId}")
+                        .hasAuthority("ADMIN")
+                    .requestMatchers(HttpMethod.POST, "/locations")
+                        .hasAuthority("ADMIN")
                     .requestMatchers(HttpMethod.DELETE, "/locations/{locationId}")
-                    .hasAuthority("ADMIN")
+                        .hasAuthority("ADMIN")
                     .requestMatchers(HttpMethod.PUT, "/locations/{locationId}")
-                    .hasAuthority("ADMIN")
+                        .hasAuthority("ADMIN")
                     .requestMatchers(HttpMethod.GET, "/locations/**")
-                    .hasAnyAuthority("ADMIN", "USER")
-                    .anyRequest().authenticated()
+                        .hasAnyAuthority("ADMIN", "USER")
+                    .requestMatchers(HttpMethod.POST, "/events")
+                        .hasAnyAuthority("ADMIN", "USER")
+                    .requestMatchers(HttpMethod.DELETE, "/events/{eventId}")
+                        .hasAnyAuthority("ADMIN", "USER")
+                    .requestMatchers(HttpMethod.PUT, "/events/{eventId}")
+                        .hasAnyAuthority("ADMIN", "USER")
+                    .requestMatchers(HttpMethod.GET, "/events/{eventId}")
+                        .hasAnyAuthority("ADMIN", "USER")
+                    .requestMatchers(HttpMethod.GET, "/events/my")
+                        .hasAnyAuthority("ADMIN", "USER")
+                    .requestMatchers(HttpMethod.GET, "/events/search")
+                        .hasAnyAuthority("ADMIN", "USER")
+                    .requestMatchers(HttpMethod.POST, "events/registrations/{eventId}")
+                        .hasAnyAuthority("ADMIN", "USER")
+                    .requestMatchers(HttpMethod.DELETE, "events/registrations/{eventId}")
+                        .hasAnyAuthority("ADMIN", "USER")
+                    .requestMatchers(HttpMethod.GET, "events/registrations/my")
+                        .hasAnyAuthority("ADMIN", "USER")
+                    .anyRequest()
+                        .authenticated()
             )
             .exceptionHandling(exception ->
                 exception.authenticationEntryPoint(authenticationEntryPoint))
@@ -79,22 +111,6 @@ public class SecurityConfig {
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
-        return web -> web.debug(true).ignoring()
-            .requestMatchers("/css/**",
-                "/js/**",
-                "/img/**",
-                "/lib/**",
-                "/favicon.ico",
-                "/swagger-ui/**",
-                "/v2/api-docs",
-                "/v3/api-docs",
-                "/configuration/ui",
-                "/swagger-resources/**",
-                "/configuration/security",
-                "/swagger-ui.html",
-                "/webjars/**",
-                "/v3/api-docs/swagger-config",
-                "/openapi.yaml"
-            );
+        return web -> web.debug(true);
     }
 }

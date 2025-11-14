@@ -5,6 +5,7 @@ import dev.kuchishkin.dto.LocationDto;
 import dev.kuchishkin.dto_converters.LocationDtoConverter;
 import dev.kuchishkin.service.LocationService;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -18,18 +19,18 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
 
 @RestController
 @RequestMapping(path = "/locations")
 public class LocationController {
+
     private static final Logger log = LoggerFactory.getLogger(LocationController.class);
 
     private final LocationService locationService;
     private final LocationDtoConverter locationDtoConverter;
 
-    public LocationController(LocationService locationService, LocationDtoConverter locationDtoConverter) {
+    public LocationController(LocationService locationService,
+        LocationDtoConverter locationDtoConverter) {
         this.locationService = locationService;
         this.locationDtoConverter = locationDtoConverter;
     }
@@ -39,9 +40,9 @@ public class LocationController {
         log.info("Get Request findAllLocations");
 
         return locationService.findAll()
-                .stream()
-                .map(locationDtoConverter::toDto)
-                .toList();
+            .stream()
+            .map(locationDtoConverter::toDto)
+            .toList();
     }
 
     @GetMapping("/{id}")
@@ -56,14 +57,16 @@ public class LocationController {
         log.info("Post Request locationDto={}", locationDto);
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(locationDtoConverter.toDto(locationService.save(locationDtoConverter.toModel(locationDto))));
+            .body(locationDtoConverter.toDto(
+                locationService.save(locationDtoConverter.toModel(locationDto))));
     }
 
     @PutMapping("/{id}")
     public LocationDto update(@PathVariable Long id, @RequestBody @Valid LocationDto locationDto) {
         log.info("Update Request locationDto={}", locationDto);
 
-        return locationDtoConverter.toDto(locationService.update(id, locationDtoConverter.toModel(locationDto)));
+        return locationDtoConverter.toDto(
+            locationService.update(id, locationDtoConverter.toModel(locationDto)));
     }
 
     @DeleteMapping("/{id}")
@@ -73,7 +76,7 @@ public class LocationController {
         locationService.deleteById(id);
 
         return ResponseEntity
-                .status(HttpStatus.NO_CONTENT)
-                .build();
+            .status(HttpStatus.NO_CONTENT)
+            .build();
     }
 }

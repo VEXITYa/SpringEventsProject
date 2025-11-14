@@ -9,21 +9,22 @@ import jakarta.validation.constraints.Size;
 
 
 public record LocationDto(
-        @Null
-        Long id,
+    @Null
+    Long id,
 
-        @NotBlank
-        String name,
+    @NotBlank
+    String name,
 
-        @NotBlank
-        String address,
+    @NotBlank
+    String address,
 
-        @NotNull
-        @Min(1)
-        int capacity,
+    @NotNull
+    @Min(1)
+    int capacity,
 
-        @NotBlank
-        @Size(max = 150)
-        String description
+    @NotBlank
+    @Size(max = 150)
+    String description
 ) {
+
 }
