@@ -1,6 +1,7 @@
 package dev.kuchishkin.entity_converters;
 
 import dev.kuchishkin.entity.EventEntity;
+import dev.kuchishkin.entity.EventRegistrationEntity;
 import dev.kuchishkin.model.Event;
 import dev.kuchishkin.model.EventRegistration;
 import org.springframework.stereotype.Component;

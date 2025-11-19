@@ -5,6 +5,7 @@ import dev.kuchishkin.dto.EventDto;
 import dev.kuchishkin.dto.EventSearchFilter;
 import dev.kuchishkin.dto.EventUpdateDto;
 import dev.kuchishkin.dto_converters.EventDtoConverter;
+import dev.kuchishkin.entity_converters.EventRequestEntityConverter;
 import dev.kuchishkin.service.EventService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -29,13 +30,16 @@ public class EventController {
 
     private final EventService eventService;
     private final EventDtoConverter eventDtoConverter;
+    private final EventRequestEntityConverter eventRequestEntityConverter;
 
     public EventController(
         EventService eventService,
-        EventDtoConverter eventDtoConverter
+        EventDtoConverter eventDtoConverter,
+        EventRequestEntityConverter eventRequestEntityConverter
     ) {
         this.eventService = eventService;
         this.eventDtoConverter = eventDtoConverter;
+        this.eventRequestEntityConverter = eventRequestEntityConverter;
     }
 
     @PostMapping
@@ -43,7 +47,13 @@ public class EventController {
         log.info("Post request createEvent: event = {}", eventDto);
 
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(eventDtoConverter.toDto(eventService.create(eventDto)));
+            .body(
+                eventDtoConverter.toDto(
+                    eventService.create(
+                        eventRequestEntityConverter.toModel(eventDto)
+                    )
+                )
+            );
     }
 
     @GetMapping("/{id}")
@@ -68,7 +78,7 @@ public class EventController {
     ) {
         log.info("Update request updateEvent: eventId = {}", id);
 
-        var event = eventService.update(id, eventDto);
+        var event = eventService.update(id, eventRequestEntityConverter.toModel(eventDto));
 
         return ResponseEntity.status(HttpStatus.OK).body(eventDtoConverter.toDto(event));
     }

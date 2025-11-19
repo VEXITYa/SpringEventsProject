@@ -19,19 +19,18 @@ public class EventRegistrationService {
 
     private final EventRegistrationRepository eventRegistrationRepository;
     private final EventService eventService;
-    private final EventRepository eventRepository;
     private final EventEntityConverter eventEntityConverter;
+    private final EventRepository eventRepository;
 
     public EventRegistrationService(
         EventRegistrationRepository eventRegistrationRepository,
         EventService eventService,
-        EventRepository eventRepository,
-        EventEntityConverter eventEntityConverter
-    ) {
+        EventEntityConverter eventEntityConverter,
+        EventRepository eventRepository) {
         this.eventRegistrationRepository = eventRegistrationRepository;
         this.eventService = eventService;
-        this.eventRepository = eventRepository;
         this.eventEntityConverter = eventEntityConverter;
+        this.eventRepository = eventRepository;
     }
 
     public void registerUserOnEvent(User user, Long eventId) {
@@ -60,24 +59,23 @@ public class EventRegistrationService {
             new EventRegistrationEntity(
                 null,
                 user.id(),
-                eventRepository.findById(eventId).orElseThrow()
+                eventRepository.findById(eventId).get()
             )
         );
     }
 
     public void cancelUserRegistrationOnEvent(User user, Long eventId) {
         Event event = eventService.findById(eventId);
-        var registration = eventRegistrationRepository.findEventRegistration(user.id(), eventId);
-        if (registration.isEmpty()) {
-            throw new IllegalArgumentException("Event registration not found");
-        }
+        var registration = eventRegistrationRepository.findEventRegistration(user.id(), eventId).orElseThrow(
+            () -> new IllegalArgumentException("Event registration not found")
+        );
         if (!event.status().equals(EventStatus.WAIT_START)) {
             throw new IllegalArgumentException(
                 "You can't cancel registration after the event is started. Event status: %s".formatted(
                     event.status()));
         }
 
-        eventRegistrationRepository.delete(registration.get());
+        eventRegistrationRepository.delete(registration);
     }
 
     public List<Event> findUserEventRegistrations(User currentUser) {

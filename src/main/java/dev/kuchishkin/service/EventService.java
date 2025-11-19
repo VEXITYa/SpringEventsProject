@@ -1,8 +1,6 @@
 package dev.kuchishkin.service;
 
-import dev.kuchishkin.dto.EventCreateDto;
 import dev.kuchishkin.dto.EventSearchFilter;
-import dev.kuchishkin.dto.EventUpdateDto;
 import dev.kuchishkin.entity.EventEntity;
 import dev.kuchishkin.entity.LocationEntity;
 import dev.kuchishkin.entity_converters.EventEntityConverter;
@@ -10,6 +8,7 @@ import dev.kuchishkin.entity_converters.LocationEntityConverter;
 import dev.kuchishkin.enums.EventStatus;
 import dev.kuchishkin.enums.UserRole;
 import dev.kuchishkin.model.Event;
+import dev.kuchishkin.model.EventRequest;
 import dev.kuchishkin.model.User;
 import dev.kuchishkin.repository.EventRepository;
 import dev.kuchishkin.security.jwt.JwtAuthenticationService;
@@ -63,7 +62,7 @@ public class EventService {
         }
     }
 
-    public Event create(EventCreateDto eventCreate) {
+    public Event create(EventRequest eventCreate) {
         var location = locationService.findById(eventCreate.locationId());
 
         if (location.capacity() < eventCreate.maxPlaces()) {
@@ -95,7 +94,7 @@ public class EventService {
     }
 
     @Transactional
-    public Event update(Long id, EventUpdateDto eventUpdate) {
+    public Event update(Long id, EventRequest eventUpdate) {
         checkUserAuthorities(id);
         EventEntity event = eventRepository.findById(id).orElseThrow(
             () -> new EntityNotFoundException("Event not found")
