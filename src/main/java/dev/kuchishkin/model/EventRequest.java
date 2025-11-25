@@ -4,10 +4,10 @@ import java.time.LocalDateTime;
 
 public record EventRequest(
     String name,
-    int maxPlaces,
+    Integer maxPlaces,
     LocalDateTime date,
-    int cost,
-    int duration,
+    Integer cost,
+    Integer duration,
     Long locationId
 ) {
 

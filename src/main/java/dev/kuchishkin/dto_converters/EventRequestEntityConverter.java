@@ -1,4 +1,4 @@
-package dev.kuchishkin.entity_converters;
+package dev.kuchishkin.dto_converters;
 
 import dev.kuchishkin.dto.EventCreateDto;
 import dev.kuchishkin.dto.EventUpdateDto;

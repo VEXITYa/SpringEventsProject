@@ -15,17 +15,17 @@ public record EventCreateDto(
     String name,
 
     @Positive(message = "Maximum places must be positive")
-    int maxPlaces,
+    Integer maxPlaces,
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     @Future(message = "Date must be in future")
     LocalDateTime date,
 
     @PositiveOrZero(message = "Cost must be non-negative")
-    int cost,
+    Integer cost,
 
     @Min(value = 30, message = "Duration must be at least 30 minutes")
-    int duration,
+    Integer duration,
 
     @NotNull(message = "Location ID required")
     Long locationId

@@ -5,7 +5,7 @@ import dev.kuchishkin.dto.EventDto;
 import dev.kuchishkin.dto.EventSearchFilter;
 import dev.kuchishkin.dto.EventUpdateDto;
 import dev.kuchishkin.dto_converters.EventDtoConverter;
-import dev.kuchishkin.entity_converters.EventRequestEntityConverter;
+import dev.kuchishkin.dto_converters.EventRequestEntityConverter;
 import dev.kuchishkin.service.EventService;
 import jakarta.validation.Valid;
 import java.util.List;

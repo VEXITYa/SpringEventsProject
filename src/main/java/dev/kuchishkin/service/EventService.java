@@ -7,8 +7,11 @@ import dev.kuchishkin.entity_converters.EventEntityConverter;
 import dev.kuchishkin.entity_converters.LocationEntityConverter;
 import dev.kuchishkin.enums.EventStatus;
 import dev.kuchishkin.enums.UserRole;
+import dev.kuchishkin.kafka.EventChangeEventSender;
 import dev.kuchishkin.model.Event;
+import dev.kuchishkin.model.EventChangeKafkaMessage;
 import dev.kuchishkin.model.EventRequest;
+import dev.kuchishkin.model.FieldModification;
 import dev.kuchishkin.model.User;
 import dev.kuchishkin.repository.EventRepository;
 import dev.kuchishkin.security.jwt.JwtAuthenticationService;
@@ -30,19 +33,22 @@ public class EventService {
     private final JwtAuthenticationService jwtAuthenticationService;
     private final LocationEntityConverter locationEntityConverter;
     private final EventEntityConverter eventEntityConverter;
+    private final EventChangeEventSender eventSender;
 
     public EventService(
         EventRepository eventRepository,
         LocationService locationService,
         JwtAuthenticationService jwtAuthenticationService,
         LocationEntityConverter locationEntityConverter,
-        EventEntityConverter eventEntityConverter
+        EventEntityConverter eventEntityConverter,
+        EventChangeEventSender eventSender
     ) {
         this.eventRepository = eventRepository;
         this.locationService = locationService;
         this.jwtAuthenticationService = jwtAuthenticationService;
         this.locationEntityConverter = locationEntityConverter;
         this.eventEntityConverter = eventEntityConverter;
+        this.eventSender = eventSender;
     }
 
     public Event findById(Long id) {
@@ -52,7 +58,7 @@ public class EventService {
         return eventEntityConverter.toModel(event);
     }
 
-    public void checkUserAuthorities(Long eventId) {
+    public Long checkUserAuthorities(Long eventId) {
         User currentUser = jwtAuthenticationService.getCurrentUser();
         Event event = findById(eventId);
         if (!(event.owner_id().equals(currentUser.id()) || currentUser.role()
@@ -60,6 +66,7 @@ public class EventService {
             throw new IllegalArgumentException(
                 "This user dont have authorities to modify this event");
         }
+        return currentUser.id();
     }
 
     public Event create(EventRequest eventCreate) {
@@ -95,7 +102,7 @@ public class EventService {
 
     @Transactional
     public Event update(Long id, EventRequest eventUpdate) {
-        checkUserAuthorities(id);
+        Long userId = checkUserAuthorities(id);
         EventEntity event = eventRepository.findById(id).orElseThrow(
             () -> new EntityNotFoundException("Event not found")
         );
@@ -108,12 +115,12 @@ public class EventService {
                 locationService.findById(eventUpdate.locationId()));
         }
 
-        if (eventUpdate.maxPlaces() < event.getMaxPlaces()) {
+        if (eventUpdate.maxPlaces() != null && eventUpdate.maxPlaces() < event.getMaxPlaces()) {
             throw new IllegalArgumentException(
                 "Capacity should be greater than or equal to max places");
         }
 
-        if (eventUpdate.maxPlaces() > location.getCapacity()) {
+        if (eventUpdate.maxPlaces() != null && eventUpdate.maxPlaces() > location.getCapacity()) {
             throw new IllegalArgumentException(
                 "Capacity should be lower than or equal to location capacity");
         }
@@ -123,20 +130,53 @@ public class EventService {
                 "Cannot modify event is status: %s".formatted(event.getStatus()));
         }
 
+        eventSender.sendEvent(
+            new EventChangeKafkaMessage(
+                event.getId(),
+                event.getOwnerId(),
+                userId,
+                event.getRegistrationList()
+                    .stream()
+                    .map(reg -> reg.getUserId())
+                    .toList(),
+                eventUpdate.name() != null ? new FieldModification<>(
+                    event.getName(),
+                    eventUpdate.name()) : null,
+                eventUpdate.maxPlaces() != null ? new FieldModification<>(
+                    event.getMaxPlaces(),
+                    eventUpdate.maxPlaces()) : null,
+                eventUpdate.date() != null ? new FieldModification<>(
+                    event.getDate(),
+                    eventUpdate.date()) : null,
+                eventUpdate.cost() != null ? new FieldModification<>(
+                    event.getCost(),
+                    eventUpdate.cost()) : null,
+                eventUpdate.duration() != null ? new FieldModification<>(
+                    event.getDuration(),
+                    eventUpdate.duration()) : null,
+                eventUpdate.locationId() != null ? new FieldModification<>(
+                    event.getLocation().getId(),
+                    location.getId()
+                ) : null,
+                null
+            )
+        );
+
         Optional.ofNullable(eventUpdate.name()).ifPresent(event::setName);
-        Optional.of(eventUpdate.duration()).ifPresent(event::setDuration);
+        Optional.ofNullable(eventUpdate.duration()).ifPresent(event::setDuration);
         Optional.ofNullable(eventUpdate.date()).ifPresent(event::setDate);
-        Optional.of(eventUpdate.cost()).ifPresent(event::setCost);
-        Optional.of(eventUpdate.maxPlaces()).ifPresent(event::setMaxPlaces);
-        Optional.of(location).ifPresent(event::setLocation);
+        Optional.ofNullable(eventUpdate.cost()).ifPresent(event::setCost);
+        Optional.ofNullable(eventUpdate.maxPlaces()).ifPresent(event::setMaxPlaces);
+        Optional.ofNullable(location).ifPresent(event::setLocation);
 
         eventRepository.save(event);
         log.info("Event updated successfully: eventId = {}", id);
+
         return eventEntityConverter.toModel(event);
     }
 
     public void cancelEvent(Long eventId) {
-        checkUserAuthorities(eventId);
+        Long userId = checkUserAuthorities(eventId);
         Event event = findById(eventId);
 
         if (event.status().equals(EventStatus.CANCELLED)) {
@@ -148,6 +188,25 @@ public class EventService {
             throw new IllegalArgumentException(
                 "Cannot cancel an event because it is already in progress");
         }
+
+        eventSender.sendEvent(
+            new EventChangeKafkaMessage(
+                event.id(),
+                event.owner_id(),
+                userId,
+                event.registrationList()
+                    .stream()
+                    .map(reg -> reg.userId())
+                    .toList(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                new  FieldModification<>(event.status(), EventStatus.CANCELLED)
+                )
+        );
 
         eventRepository.changeEventStatus(eventId, EventStatus.CANCELLED);
         log.info("Event cancelled successfully: eventId = {}", eventId);
