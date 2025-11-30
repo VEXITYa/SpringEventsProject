@@ -40,16 +40,16 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         }
         var jwt = authHeader.substring(7);
 
-        String login;
+        Long id;
         try {
-            login = jwtTokenManager.getLoginFromToken(jwt);
+            id = jwtTokenManager.getClaimsFromToken(jwt).get("user_id", Long.class);
         } catch (Exception e) {
             logger.error("Error reading jwt", e);
             filterChain.doFilter(request, response);
             return;
         }
 
-        var user = userService.findByLogin(login);
+        var user = userService.findById(id);
 
         UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(
             user,

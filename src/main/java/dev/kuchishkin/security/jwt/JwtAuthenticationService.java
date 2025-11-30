@@ -1,6 +1,7 @@
 package dev.kuchishkin.security.jwt;
 
 import dev.kuchishkin.dto.SignInRequest;
+import dev.kuchishkin.dto.UserSignIn;
 import dev.kuchishkin.model.User;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,14 +21,14 @@ public class JwtAuthenticationService {
         this.jwtTokenManager = jwtTokenManager;
     }
 
-    public String authenticateUser(SignInRequest signInRequest) {
+    public String authenticateUser(UserSignIn userData) {
         authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(
-                signInRequest.login(),
-                signInRequest.password()
+                userData.login(),
+                userData.password()
             )
         );
-        return jwtTokenManager.generateToken(signInRequest.login());
+        return jwtTokenManager.generateToken(userData.login(), userData.id());
     }
 
     public User getCurrentUser() {

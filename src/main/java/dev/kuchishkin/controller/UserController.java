@@ -4,6 +4,7 @@ import dev.kuchishkin.dto.JwtTokenResponse;
 import dev.kuchishkin.dto.SignInRequest;
 import dev.kuchishkin.dto.SignUpRequest;
 import dev.kuchishkin.dto.UserDto;
+import dev.kuchishkin.dto.UserSignIn;
 import dev.kuchishkin.dto_converters.UserDtoConverter;
 import dev.kuchishkin.security.jwt.JwtAuthenticationService;
 import dev.kuchishkin.service.UserRegistrationService;
@@ -68,7 +69,10 @@ public class UserController {
     ) {
         log.info("Post request authenticate: login = {}", signInRequest.login());
 
-        var token = jwtAuthenticationService.authenticateUser(signInRequest);
+        Long userId = userService.findByLogin(signInRequest.login()).id();
+        UserSignIn userData = new UserSignIn(signInRequest.login(), signInRequest.password(), userId);
+
+        var token = jwtAuthenticationService.authenticateUser(userData);
         return ResponseEntity.ok(new JwtTokenResponse(token));
     }
 }
